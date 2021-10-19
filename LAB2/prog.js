@@ -1,3 +1,5 @@
+var PriorityQueue = require('priorityqueuejs');
+const readline = require('readline-sync');
 function init(n) {
     var problem = {}; 
     // People[0][i] is married to People[1][i], the value of it is either 0 or 1, representing which side they are on
@@ -194,12 +196,182 @@ function bfs(initialState) {
     return false;
 }
 
+function hillHeuristic(state) {
+    var result = 0;
+    for(var personType in state.People) {
+        for(var side of state.People[personType]) {
+            result += side; 
+        }
+    }
+    return result;
+}
+
+function hillClimbing(initialState) {
+    var queue = new PriorityQueue((a, b) => {
+        return hillHeuristic(a) - hillHeuristic(b);
+    });
+    queue.enq(initialState);
+    while(queue.size()) {
+        
+        state = queue.deq();
+
+        if(checkFinal(state)) {
+            while(state != null) {
+                console.log(state);
+                state = state.ParentState;
+            }
+            return true;
+        }
+
+        if(checkStateVisited(state)) {
+            continue;
+        }else {
+            visitedStates.push(cloneState(state));
+        }
+
+        for(var i in state.People[0]) {
+            for(var j in state.People[1]) {
+                for(var nrOfPassengers = 1; nrOfPassengers <= 2; nrOfPassengers++) {
+                    for(var type = 0; type <= 1; type++) {
+                        for(var sameType = 0; sameType <= 1; sameType++) {
+                            var newAction = [];
+                            newAction.push([type, i]);
+                            if(nrOfPassengers > 1) {
+
+                                if(sameType == 0)
+                                    newAction.push([type ? 0 : 1, j]);
+                                else
+                                    newAction.push([type, j]);
+                            }
+                            if(transitionPossible(state, newAction)) {
+                                var clonedState = cloneState(state);
+                                Transition(clonedState, newAction);
+                                clonedState.ParentState = state;
+                                if(hillHeuristic(clonedState) > hillHeuristic(state))
+                                    queue.enq(clonedState);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    while(state != null) {
+        console.log(state);
+        state = state.ParentState;
+    }
+    return false;
+}
+
+function starHeuristic(state) {
+    var result = state.StepNumber;
+    for(var personType in state.People) {
+        for(var side of state.People[personType]) {
+            result += side; 
+        }
+    }
+    return result;
+}
+
+function aStar(initialState) {
+    var queue = new PriorityQueue((a, b) => {
+        return starHeuristic(a) - starHeuristic(b);
+    });
+    initialState.StepNumber = 0;
+    queue.enq(initialState);
+    while(queue.size()) {
+        
+        state = queue.deq();
+
+        if(checkFinal(state)) {
+            while(state != null) {
+                console.log(state);
+                state = state.ParentState;
+            }
+            return true;
+        }
+
+        if(checkStateVisited(state)) {
+            continue;
+        }else {
+            visitedStates.push(cloneState(state));
+        }
+
+        for(var i in state.People[0]) {
+            for(var j in state.People[1]) {
+                for(var nrOfPassengers = 1; nrOfPassengers <= 2; nrOfPassengers++) {
+                    for(var type = 0; type <= 1; type++) {
+                        for(var sameType = 0; sameType <= 1; sameType++) {
+                            var newAction = [];
+                            newAction.push([type, i]);
+                            if(nrOfPassengers > 1) {
+
+                                if(sameType == 0)
+                                    newAction.push([type ? 0 : 1, j]);
+                                else
+                                    newAction.push([type, j]);
+                            }
+                            if(transitionPossible(state, newAction)) {
+                                var clonedState = cloneState(state);
+                                Transition(clonedState, newAction);
+                                clonedState.ParentState = state;
+                                clonedState.StepNumber = state.StepNumber + 1;
+                                queue.enq(clonedState);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    while(state != null) {
+        console.log(state);
+        state = state.ParentState;
+    }
+    return false;
+}
 
 
-var state = init(3);
+var endApplication = false;
+while(!endApplication) {
+    var state = init(3);
+    console.log('Available algorithms:');
+    console.log('bkt - Backtracking');
+    console.log('bfs - Breadth First Search');
+    console.log('hill - Hill Climbing');
+    console.log('A* - A*');
+    let command = readline.question('What algorithm should we use? Write exit in order to exit \n');
+    finalTransitionList = [];
+    visitedStates = [];
+    
 
-console.log("there exists a solution: " + bfs(state));
-console.log(JSON.stringify(finalTransitionList, 2, 4));
+    switch(command) {
+        case 'exit': 
+            endApplication = true;
+            break;
+        case 'bkt': 
+            console.log("there exists a solution: " + bkt(state));
+            console.log(JSON.stringify(finalTransitionList, 2, 4));
+            break;
+        case 'bfs': 
+            console.log("there exists a solution: " + bfs(state));
+            break;
+        case 'hill': 
+            console.log("there exists a solution: " + hillClimbing(state));
+            break;
+        case 'A*': 
+            console.log("there exists a solution: " + aStar(state));
+            break;
+        default:
+            console.log('invalid command');
+            break;
+
+    }
+
+}
+
 
 
 
