@@ -11,7 +11,7 @@ function initState(n, m, k) {
     return state;
 }
 function getWinner(state) {
-    if(state.stepNumber > state.colors.length * 2)
+    if(state.stepNumber >= state.colors.length * 2)
         return "Mastermind wins";
     else if(isCorrectFinalState(state))
         return "Player wins";
@@ -55,7 +55,7 @@ function getRandomInt(max) {
 }
 
 function runGame() {
-    var startState = initState(8, 2, 3);
+    var startState = initState(8, 1, 3);
 
     console.log(startState);
     console.log("You have to guess 3 different colors, out of 8 possible colors, each of them possibly repeating 1 times maximum");
@@ -78,16 +78,16 @@ function runGame() {
             continue;
         }
         startState.currentState = parsedGuess;
+        startState.stepNumber++;
 
         var winner = getWinner(startState);
         if(winner !== false) {
             console.log(winner);
             return;
         }else {
-            console.log(`You guessed ${getCurrentMatch(startState)} out of 3 correctly, you have ${Math.pow(startState.colors.length, 2) - startState.stepNumber} gueses left`);
+            console.log(`You guessed ${getCurrentMatch(startState)} out of 3 correctly, you have ${startState.colors.length * 2 - startState.stepNumber} gueses left`);
         }
         
-        startState.stepNumber++;
     }
 
 }
